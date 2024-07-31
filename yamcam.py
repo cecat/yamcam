@@ -12,7 +12,7 @@ import tflite_runtime.interpreter as tflite
 logging.basicConfig(level=logging.INFO)  # Change to INFO to reduce verbosity
 logger = logging.getLogger(__name__)
 
-logger.info("----------------Add-on Started. updated v0.0.5----------------")
+logger.info("----------------Add-on Started.----------------")
 
 # Load user configuration from /config/microphones.yaml
 config_path = '/config/microphones.yaml'
@@ -22,6 +22,11 @@ if not os.path.exists(config_path):
 
 with open(config_path) as f:
     config = yaml.safe_load(f)
+
+# Extract general parameters from user config
+general_settings = config.get('general', {})
+sample_interval = general_settings.get('sample_interval', 15)
+reporting_threshold = general_settings.get('reporting_threshold', 0.4)
 
 # Extract MQTT settings from user config
 mqtt_settings = config.get('mqtt', {})
@@ -67,47 +72,49 @@ logger.info(f"Input details: {input_details}")
 class_names = [name.strip('"') for name in np.loadtxt('yamnet_class_map.csv', delimiter=',', dtype=str, skiprows=1, usecols=2)]
 
 # Function to analyze audio using YAMNet
-def analyze_audio(rtsp_url, duration=10):
-    command = [
-        'ffmpeg',
-        '-y',
-        '-i', rtsp_url,
-        '-t', str(duration),
-        '-f', 'wav',
-        '-acodec', 'pcm_s16le',
-        '-ar', '16000',  # Resample to 16 kHz
-        '-ac', '1',
-        'pipe:1'
-    ]
-    
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    
-    if process.returncode != 0:
-        logger.error(f"FFmpeg error: {stderr.decode('utf-8')}")
-        return None
-    
-    with io.BytesIO(stdout) as f:
-        waveform = np.frombuffer(f.read(), dtype=np.int16) / 32768.0
+def analyze_audio(rtsp_url, duration=10, retries=3):
+    for attempt in range(retries):
+        command = [
+            'ffmpeg',
+            '-y',
+            '-i', rtsp_url,
+            '-t', str(duration),
+            '-f', 'wav',
+            '-acodec', 'pcm_s16le',
+            '-ar', '16000',  # Resample to 16 kHz
+            '-ac', '1',
+            'pipe:1'
+        ]
+        
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        
+        if process.returncode == 0:
+            with io.BytesIO(stdout) as f:
+                waveform = np.frombuffer(f.read(), dtype=np.int16) / 32768.0
 
-    # Ensure the waveform is reshaped to match the expected input shape
-    expected_length = input_details[0]['shape'][0]
-    if waveform.shape[0] > expected_length:
-        waveform = waveform[:expected_length]
-    elif waveform.shape[0] < expected_length:
-        padding = np.zeros(expected_length - waveform.shape[0], dtype=np.float32)
-        waveform = np.concatenate((waveform, padding))
+            # Ensure the waveform is reshaped to match the expected input shape
+            expected_length = input_details[0]['shape'][0]
+            if waveform.shape[0] > expected_length:
+                waveform = waveform[:expected_length]
+            elif waveform.shape[0] < expected_length:
+                padding = np.zeros(expected_length - waveform.shape[0], dtype=np.float32)
+                waveform = np.concatenate((waveform, padding))
 
-    waveform = waveform.astype(np.float32)
-    
-    interpreter.set_tensor(input_details[0]['index'], waveform)
-    interpreter.invoke()
-    scores = interpreter.get_tensor(output_details[0]['index'])
-    
-    return scores
+            waveform = waveform.astype(np.float32)
+            
+            interpreter.set_tensor(input_details[0]['index'], waveform)
+            interpreter.invoke()
+            scores = interpreter.get_tensor(output_details[0]['index'])
+            
+            return scores
+        
+        logger.error(f"FFmpeg error (attempt {attempt + 1}/{retries}): {stderr.decode('utf-8')}")
+        if "No route to host" in stderr.decode('utf-8'):
+            logger.error(f"Verify that the RTSP feed '{rtsp_url}' is correct.")
+        time.sleep(5)  # Wait a bit before retrying
 
-# Sample interval                                     
-sample_interval = 30  # Sample every 30 seconds
+    return None  # Return None if all attempts fail
 
 # Main Loop
 while True:                             
@@ -125,7 +132,7 @@ while True:
             results = []
             for i in top_class_indices:
                 score = scores[0][i]
-                if score >= 0.5:  # Lower threshold for testing purposes
+                if score >= reporting_threshold:  # Use reporting_threshold from config
                     results.append(f"{class_names[i]} ({score:.2f})")
                 if len(results) >= 3:
                     break

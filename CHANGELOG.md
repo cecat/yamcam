@@ -1,6 +1,13 @@
 
 # Changelog
 
+## 0.0.7
+- handle unreachable camera errors nicely, try 3x before giving up
+- let the user know what rtsp feed is unreachable
+
+## 0.0.6
+- move sampling frequency and score threshold to /config/microphones.yaml
+
 ## 0.0.5
 - lots of experiments, now using Tensorflow Lite
 - this version requires pre-downloading tflite and the yamnet class csv
