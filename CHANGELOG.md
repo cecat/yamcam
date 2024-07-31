@@ -1,6 +1,9 @@
 
 # Changelog
 
+## 0.0.8
+- normalize the volume levels to see if this helps yamnet performance
+
 ## 0.0.7
 - handle unreachable camera errors nicely, try 3x before giving up
 - let the user know what rtsp feed is unreachable

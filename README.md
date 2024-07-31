@@ -16,11 +16,12 @@ warning siren migth not be a bad thing either.
 
 This add-on has only been tested on Amcrest
 cameras and moreover on an Intel Celeron (that does not support Advanced Vector
-Extensions (AVX) instructions), so it's far from proven.
+Extensions (AVX) instructions), so it's far from proven.  It's not yet clear
+to me that this will be useful in the end but it is worth a try.
 
-I'm not yet reporting to HA, just logging and experimenting with things like
-sample frequency and thresholds.  But it's a start. Right now it just sends
-a MQTT  message to HA via HA of the form "Class (score), Class (score)..."
+The code right now has very extensive logging as I am experimenting with things like
+sample frequency and thresholds.  For each sound source, at each reporting interval,
+we send a MQTT  message to HA of the form "Class (score), Class (score)..."
 
 0. This addon assumes you are running a MQTT broker already. This code
 has (only) been tested with the open source
@@ -64,5 +65,6 @@ which I downloaded from the
 You will also see *yamnet_class_map.csv* in this subdirectory. This maps the
 return codes from Yamnet to the human-readable names for those classes. There are
 a whopping 521 sound classes.
+
 
 

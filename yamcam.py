@@ -93,6 +93,9 @@ def analyze_audio(rtsp_url, duration=10, retries=3):
             with io.BytesIO(stdout) as f:
                 waveform = np.frombuffer(f.read(), dtype=np.int16) / 32768.0
 
+            # Normalize the volume
+            waveform = waveform / np.max(np.abs(waveform))
+
             # Ensure the waveform is reshaped to match the expected input shape
             expected_length = input_details[0]['shape'][0]
             if waveform.shape[0] > expected_length:
