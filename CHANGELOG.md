@@ -1,6 +1,10 @@
 
 # Changelog
 
+## 0.0.9
+- change slug name and MQTT client ID (ignore /config/microphones here)
+  to avoid interference with the version in my repo
+
 ## 0.0.8
 - normalize the volume levels to see if this helps yamnet performance
 

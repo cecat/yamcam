@@ -1,8 +1,8 @@
 {
-  "name": "YAMNet Camera Sounds",
+  "name": "YAMNet Camera Sounds Local",
   "description": "Analyze audio from camera mics via RTSP streams to detect sound types using YAMNet",
-  "version": "0.0.8",
-  "slug": "yamcam",
+  "version": "0.0.9",
+  "slug": "yamcam-local",
   "init": false,
   "arch": [
     "aarch64",
