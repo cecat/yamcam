@@ -2,24 +2,25 @@
 CeC
 July 2024
 
-# This is under development - not even a beta yet 
-
-### ...nothing to see here...
-
 ---
 
 
-Use the YAMNet sound model to characterize sound using  microphones on remote cameras 
-It's not recording to keep anything, just taking 5s samples periodically and classifying
+Use TensorFlow Lite and the YAMNet sound model to characterize 
+sounds deteced by  microphones on remote cameras.
+It's not recording to keep anything, just taking 1s samples periodically and classifying
 the sound, ideally to be able to detect people sounds, traffic sounds, storms, etc.
-I was motivated by an interest in being able to detect that peeople are hanging out
-even if they are outside of the camera's field of view.  Detecting a tornado 
+I was motivated by an interest in being able to detect that people are hanging out,
+or the lawn was being mowed, even if the action is outside of the camera's field of
+view.  Detecting a tornado 
 warning siren migth not be a bad thing either.
 
 This add-on has only been tested on Amcrest
-cameras so it's far from proven.
+cameras and moreover on an Intel Celeron (that does not support Advanced Vector
+Extensions (AVX) instructions), so it's far from proven.
 
-
+I'm not yet reporting to HA, just logging and experimenting with things like
+sample frequency and thresholds.  But it's a start. Right now it just sends
+a MQTT  message to HA via HA of the form "Class (score), Class (score)..."
 
 0. This addon assumes you are running a MQTT broker already. This code
 has (only) been tested with the open source
@@ -56,7 +57,12 @@ cameras:
 
 ## Notes
 
-The Yamnet class file is downloaded from the Tensorflow github repo, specifically:
-'''
-https://github.com/tensorflow/models/tree/master/research/audioset/yamnet
-'''
+You'll see there is a *files* subdirectory, where I put the tflite model for yamnet,
+which I downloaded from the
+[TensorFlow hub](https://www.kaggle.com/models/google/yamnet/tfLite/classification-tflite/1?lite-format=tflite&tfhub-redirect=true).
+
+You will also see *yamnet_class_map.csv* in this subdirectory. This maps the
+return codes from Yamnet to the human-readable names for those classes. There are
+a whopping 521 sound classes.
+
+
