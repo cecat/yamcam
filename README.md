@@ -54,4 +54,9 @@ cameras:
 ```
 
 
+## Notes
 
+The Yamnet class file is downloaded from the Tensorflow github repo, specifically:
+'''
+https://github.com/tensorflow/models/tree/master/research/audioset/yamnet
+'''
